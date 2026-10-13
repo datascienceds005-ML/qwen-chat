@@ -1,1 +1,39 @@
+name: ci
 
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install
+        run: pip install -e ./backend[dev]
+      - name: Lint
+        run: ruff check backend scripts
+      - name: Unit + contract tests
+        run: pytest backend/tests -m "not e2e" -q
+      - name: OpenAPI golden schema drift check
+        run: |
+          python scripts/export_openapi.py
+          git diff --exit-code docs/openapi.golden.json
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Install
+        run: pip install -e ./backend[dev]
+      - name: Install Chromium
+        run: playwright install --with-deps chromium
+      - name: Generate PWA icons
+        run: python scripts/generate_icons.py
+      - name: End-to-end tests
+        run: pytest backend/tests -m e2e -q
