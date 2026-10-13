@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qwen-chat-backend"
+version = "0.1.0"
+description = "Offline-first Qwen chat backend (mock engine in CI, llama.cpp on device)"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110,<0.116",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=1.10",          # v1/v2-compatible code: installable on Termux with pydantic<2
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "ruff>=0.4",
+    "playwright>=1.44",
+    "pytest-playwright>=0.5",
+]
+# DEVICE ONLY — never install in CI or Codespaces (compiles llama.cpp for ARM).
+mobile = ["llama-cpp-python>=0.2.8"]
+
+[tool.setuptools]
+packages = ["app", "app.api", "app.core", "app.engine"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not e2e'"
+markers = ["e2e: browser end-to-end tests (deselected by default)"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
